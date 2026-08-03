@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.so
+
+# Virtual Environment
+venv/
+.env
+
+# VS Code
+.vscode/
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Spark
+metastore_db/
+spark-warehouse/
+derby.log
+
+# Hadoop
+*.crc
+
+# Output Files
+outputs/charts/
+outputs/reports/
+outputs/protected_dataset.csv
+
+# Large datasets
+data/*.csv
+data/*.parquet
+
+# Logs
+*.log
