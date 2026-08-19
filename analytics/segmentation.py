@@ -34,10 +34,20 @@ def customer_segmentation(df):
 
         if col in segmented_df.columns:
 
-            segmented_df[col] = pd.to_numeric(
+            converted = pd.to_numeric(
                 segmented_df[col],
                 errors="coerce"
             )
+
+            # If conversion destroyed almost everything, the privacy
+            # engine already bucketized this column (e.g. Age -> "Young Adult").
+            # In that case keep the original categorical values instead.
+            non_null_original = segmented_df[col].dropna()
+
+            if len(non_null_original) > 0 and converted.notna().sum() < len(non_null_original) * 0.5:
+                continue
+
+            segmented_df[col] = converted
 
     # =====================================================
     # Age Groups
@@ -47,23 +57,30 @@ def customer_segmentation(df):
 
         age_data = segmented_df["age"].dropna()
 
-        segmented_df.loc[age_data.index, "age_group"] = pd.cut(
+        if pd.api.types.is_numeric_dtype(age_data):
 
-            age_data,
+            segmented_df.loc[age_data.index, "age_group"] = pd.cut(
 
-            bins=[18,25,35,45,60,100],
+                age_data,
 
-            labels=[
-                "18-25",
-                "26-35",
-                "36-45",
-                "46-60",
-                "60+"
-            ],
+                bins=[18,25,35,45,60,100],
 
-            include_lowest=True
+                labels=[
+                    "18-25",
+                    "26-35",
+                    "36-45",
+                    "46-60",
+                    "60+"
+                ],
 
-        )
+                include_lowest=True
+
+            )
+
+        else:
+
+            # Already bucketized by the privacy engine (e.g. "Young Adult")
+            segmented_df["age_group"] = age_data
 
         age_group = segmented_df["age_group"].value_counts().sort_index()
 
@@ -87,7 +104,7 @@ def customer_segmentation(df):
 
         plt.close()
 
-        print("✓ Age Group chart generated.")
+        print("Γ£ô Age Group chart generated.")
 
     # =====================================================
     # Income Segments
@@ -136,7 +153,7 @@ def customer_segmentation(df):
 
         plt.close()
 
-        print("✓ Income Segmentation generated.")
+        print("Γ£ô Income Segmentation generated.")
 
     # =====================================================
     # Savings Segments
@@ -185,7 +202,7 @@ def customer_segmentation(df):
 
         plt.close()
 
-        print("✓ Savings Segmentation generated.")
+        print("Γ£ô Savings Segmentation generated.")
 
     # =====================================================
     # Account Type Distribution
@@ -211,7 +228,7 @@ def customer_segmentation(df):
 
         plt.close()
 
-        print("✓ Account Type chart generated.")
+        print("Γ£ô Account Type chart generated.")
 
     # =====================================================
     # Premium Customers
@@ -222,6 +239,8 @@ def customer_segmentation(df):
     if (
         "monthly_income" in segmented_df.columns
         and "savings_balance" in segmented_df.columns
+        and pd.api.types.is_numeric_dtype(segmented_df["monthly_income"])
+        and pd.api.types.is_numeric_dtype(segmented_df["savings_balance"])
     ):
 
         premium_customers = len(
@@ -248,15 +267,21 @@ def customer_segmentation(df):
 
             "average_age":
                 round(segmented_df["age"].mean(),2)
-                if "age" in segmented_df.columns else None,
+                if "age" in segmented_df.columns
+                and pd.api.types.is_numeric_dtype(segmented_df["age"])
+                else None,
 
             "average_income":
                 round(segmented_df["monthly_income"].mean(),2)
-                if "monthly_income" in segmented_df.columns else None,
+                if "monthly_income" in segmented_df.columns
+                and pd.api.types.is_numeric_dtype(segmented_df["monthly_income"])
+                else None,
 
             "average_savings":
                 round(segmented_df["savings_balance"].mean(),2)
-                if "savings_balance" in segmented_df.columns else None,
+                if "savings_balance" in segmented_df.columns
+                and pd.api.types.is_numeric_dtype(segmented_df["savings_balance"])
+                else None,
 
             "premium_customers": premium_customers
 
