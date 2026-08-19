@@ -14,18 +14,34 @@ os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 os.makedirs(REPORT_FOLDER, exist_ok=True)
 
 
+def _first_existing_column(df, candidates):
+    for col in candidates:
+        if col in df.columns:
+            return col
+    return None
+
+
 def credit_risk_analysis(df):
 
     print("\nGenerating Credit Risk Analytics...\n")
 
     total_customers = len(df)
 
+    # Support both the original expected names and the actual
+    # production dataset's column names.
+    credit_score_col = _first_existing_column(
+        df, ["credit_score", "cibil_score"]
+    )
+    emi_col = _first_existing_column(
+        df, ["emi_amount", "loan_emi"]
+    )
+
     active_loans = (
         df["loan_status"] == "Active"
     ).sum() if "loan_status" in df.columns else 0
 
     default_loans = (
-        df["loan_status"] == "Default"
+        df["loan_status"].isin(["Default", "Defaulted"])
     ).sum() if "loan_status" in df.columns else 0
 
     default_rate = round(
@@ -40,14 +56,14 @@ def credit_risk_analysis(df):
     )
 
     average_cibil = (
-        round(df["credit_score"].mean(), 2)
-        if "credit_score" in df.columns
+        round(df[credit_score_col].mean(), 2)
+        if credit_score_col is not None
         else None
     )
 
     average_emi = (
-        round(df["emi_amount"].mean(), 2)
-        if "emi_amount" in df.columns
+        round(df[emi_col].mean(), 2)
+        if emi_col is not None
         else None
     )
 
@@ -81,7 +97,7 @@ def credit_risk_analysis(df):
 
         plt.close()
 
-        print("✓ Loan Status chart generated.")
+        print("Loan Status chart generated.")
 
     # ======================================================
     # Loan Amount Distribution
@@ -92,7 +108,7 @@ def credit_risk_analysis(df):
         plt.figure(figsize=(8,5))
 
         plt.hist(
-            df["loan_amount"],
+            df["loan_amount"].dropna(),
             bins=30
         )
 
@@ -108,18 +124,18 @@ def credit_risk_analysis(df):
 
         plt.close()
 
-        print("✓ Loan Amount chart generated.")
+        print("Loan Amount chart generated.")
 
     # ======================================================
     # Credit Score Distribution
     # ======================================================
 
-    if "credit_score" in df.columns:
+    if credit_score_col is not None:
 
         plt.figure(figsize=(8,5))
 
         plt.hist(
-            df["credit_score"],
+            df[credit_score_col].dropna(),
             bins=25
         )
 
@@ -135,7 +151,7 @@ def credit_risk_analysis(df):
 
         plt.close()
 
-        print("✓ Credit Score chart generated.")
+        print("Credit Score chart generated.")
 
     # ======================================================
     # Default by Account Type
@@ -148,7 +164,7 @@ def credit_risk_analysis(df):
 
         default_account = (
             df.assign(
-                default=df["loan_status"] == "Default"
+                default=df["loan_status"].isin(["Default", "Defaulted"])
             )
             .groupby("account_type")["default"]
             .mean() * 100
@@ -173,7 +189,7 @@ def credit_risk_analysis(df):
 
         plt.close()
 
-        print("✓ Default by Account Type generated.")
+        print("Default by Account Type generated.")
 
     # ======================================================
     # Default by KYC Status
@@ -186,7 +202,7 @@ def credit_risk_analysis(df):
 
         default_kyc = (
             df.assign(
-                default=df["loan_status"] == "Default"
+                default=df["loan_status"].isin(["Default", "Defaulted"])
             )
             .groupby("kyc_status")["default"]
             .mean() * 100
@@ -211,7 +227,7 @@ def credit_risk_analysis(df):
 
         plt.close()
 
-        print("✓ Default by KYC generated.")
+        print("Default by KYC generated.")
 
     results = {
 
@@ -219,9 +235,9 @@ def credit_risk_analysis(df):
 
             "total_customers": total_customers,
 
-            "active_loans": active_loans,
+            "active_loans": int(active_loans),
 
-            "default_loans": default_loans,
+            "default_loans": int(default_loans),
 
             "default_rate": default_rate,
 
