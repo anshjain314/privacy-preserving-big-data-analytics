@@ -295,7 +295,7 @@ This ensures analytical processing is performed only on protected data.
 
 # 👥 Team
 
-**Ayush Singh · Ansh Jain · Abhishek L · Abhinav Kumar Mishra**
+**Ansh Jain · Ayush Singh · Abhishek L · Abhinav Kumar Mishra**
 
 Bachelor of Engineering (Computer Science & Engineering)
 R V Institute of Technology and Management, Bengaluru, India
